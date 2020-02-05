@@ -2,3 +2,4 @@
 *.xlsx
 *.xls
 Data/
+Code/__pycache__/

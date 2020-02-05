@@ -1,4 +1,5 @@
-
+import os
+import pandas as pd
 
 def convert_to_df(a_file):
     #file_path = os.path.join('Ib Activity', a_file)
@@ -9,8 +10,8 @@ def convert_to_df(a_file):
     data = data.loc[~data.a.isin(['Statement','Codes', 'Notes/Legal Notes','Account Information','Change in NAV','Mark-to-Market Performance Summary','Realized & Unrealized Performance Summary','Open Positions'])]
     return data
 
- def process_ca(data):
-        data_ca = data.loc[data.a =='Corporate Actions']
+def process_ca(data):
+    data_ca = data.loc[data.a =='Corporate Actions']
     if len(data_ca) > 0:
         ca = data_ca.loc[data_ca.b == 'Data']
         if len(ca) > 0:
@@ -22,7 +23,11 @@ def convert_to_df(a_file):
             ca.dropna(axis=0,inplace=True)
             ca['Comm/Fee'] = 0
             ca['T. Price'] = 0
-            return ca
+        else:
+            ca = pd.DataFrame()
+    else:
+        ca = ca = pd.DataFrame()
+    return ca
 
 def process_data(data, asset_category):
     data_trades = data.loc[data.a =='Trades']
@@ -38,7 +43,11 @@ def process_data(data, asset_category):
             trades.rename(columns={'Comm in USD':'Comm/Fee'},inplace=True, errors='ignore')
             if 'Proceeds' not in trades.columns: trades['Proceeds'] = 0
             trades['Quantity'] = trades['Quantity'].str.replace(',', '')
-            return trades
+        else:
+            trades = pd.DataFrame()
+    else:
+        trades = pd.DataFrame()
+    return trades
 
 def process_depAndWith(data):
     data_depAndWith = data.loc[data.a == 'Deposits & Withdrawals']
@@ -104,7 +113,11 @@ def process_fees(data):
             ca = ca.loc[:,ca.columns.notna()] 
             ca.drop(columns=['Fees','Header'], inplace=True, errors='ignore')
             ca.dropna(axis=0,inplace=True)
-            return ca
+        else:
+            ca = pd.DataFrame()
+    else:
+        ca = pd.DataFrame()
+    return ca
 
 
 
