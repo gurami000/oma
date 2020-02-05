@@ -1,12 +1,8 @@
 import os
 import pandas as pd
 
-def convert_to_df(a_file):
-    #file_path = os.path.join('Ib Activity', a_file)
-    #data = pd.read_csv(file_path, names=list('abcdefghijklmnopq'))
-    data = pd.read_csv(a_file, names=list('abcdefghijklmnopq'))
-    #data.drop(data.loc[(data.a == 'Notes/Legal Notes') | (data.a == 'Codes') ].index, inplace= True)
-    #data = (data.a != 'Codes') & (data.a != 'Notes/Legal Notes')
+def convert_to_df(folder,a_file):
+    data = pd.read_csv(folder/a_file, names=list('abcdefghijklmnopq'))
     data = data.loc[~data.a.isin(['Statement','Codes', 'Notes/Legal Notes','Account Information','Change in NAV','Mark-to-Market Performance Summary','Realized & Unrealized Performance Summary','Open Positions'])]
     return data
 
@@ -131,7 +127,7 @@ def get_all_trades(folder):
     for a_file in filelist:
         #Checks if file is a .csv
         if a_file.lower().endswith('.csv'):
-            data = convert_to_df(a_file)
+            data = convert_to_df(folder,a_file)
             for i in asset_categories_lst:
                 df = process_data(data, i)
                 dataframe_list.append(df)
@@ -155,7 +151,7 @@ def get_all_depAndWith(folder):
     for file_ in filelist:
         #Checks if file is a .csv
         if file_.lower().endswith('.csv'):
-            data = convert_to_df(file_)
+            data = convert_to_df(folder,file_)
             depAndWith = process_depAndWith(data)
             #if type(div) != 'NonType':
             if len(depAndWith) !=0:
@@ -174,7 +170,7 @@ def get_all_dividends(folder):
     for file_ in filelist:
         #Checks if file is a .csv
         if file_.lower().endswith('.csv'):
-            data = convert_to_df(file_)
+            data = convert_to_df(folder,file_)
             div = process_div(data)
             tax = process_tax(data)
             #if type(div) != 'NonType':
@@ -200,7 +196,7 @@ def get_all_fees(folder):
     for file_ in filelist:
         #Checks if file is a .csv
         if file_.lower().endswith('.csv'):
-            data = convert_to_df(file_)
+            data = convert_to_df(folder,file_)
             fee = process_fees(data)
             if type(fee) != 'NonType':
                 fees_list.append(fee)

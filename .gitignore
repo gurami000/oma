@@ -3,3 +3,4 @@
 *.xls
 Data/
 Code/__pycache__/
+.vscode/
