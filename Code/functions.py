@@ -3,7 +3,7 @@ import pandas as pd
 
 def convert_to_df(folder,a_file):
     data = pd.read_csv(folder/a_file, names=list('abcdefghijklmnopq'))
-    data = data.loc[~data.a.isin(['Statement','Codes', 'Notes/Legal Notes','Account Information','Change in NAV','Mark-to-Market Performance Summary','Realized & Unrealized Performance Summary','Open Positions'])]
+    data = data.loc[~data.a.isin(['Codes', 'Notes/Legal Notes','Account Information','Change in NAV','Mark-to-Market Performance Summary','Realized & Unrealized Performance Summary','Open Positions'])]
     return data
 
 def process_ca(data):
@@ -115,7 +115,36 @@ def process_fees(data):
         ca = pd.DataFrame()
     return ca
 
+def process_pv(data):
+    date = data.loc[data.a =='Statement']
+    date = date.loc[date.c =='Period']
+    date.dropna(axis=1,inplace=True)
+    date.drop(columns=['a','b','c'], inplace=True, errors='ignore')
+    date.reset_index(inplace=True,drop=True)
+    date = date.iloc[0:1]
+    date.columns = ['Date']
+    data_pv = data.loc[data.a =='Net Asset Value']
+    if len(data_pv) > 0:
+        pv = data_pv.loc[data_pv.b == 'Data']
+        if len(pv) > 0:
+            first_row = pv.index.values[0]-1
+            header_row = list(data_pv.loc[first_row])
+            pv.columns = header_row
+            pv = pv.loc[:,pv.columns.notna()]
+            pv = pv.loc[pv['Asset Class'] == 'Total']
+            pv.drop(columns=['Asset Class','Net Asset Value','Header','Prior Total', 'Current Long', 'Current Short','Change'], inplace=True, errors='ignore')
+            pv.reset_index(inplace=True,drop=True)
+            pv = date.join(pv)
+            pv['Date'] = pd.to_datetime(pv['Date'])
+            pv['Current Total'] =  pv['Current Total'].astype('float')
+            #pv.set_index('Date',inplace=True)
+            df = pd.DataFrame(data=pv, index=date)
+        else:
+            pv = pd.DataFrame()
+    else:
+        pv= pd.DataFrame()
 
+    return pv
 
 def get_all_trades(folder):
     #Creates a list of all files in folder
@@ -202,6 +231,23 @@ def get_all_fees(folder):
                 fees_list.append(fee)
     fees = pd.concat(fees_list,sort=False )
     return fees
+
+def get_all_portfolio_value(folder):
+    #Creates a list of all files in folder
+    filelist = os.listdir(folder)
+    #Creates a empty list to append all dataframes
+    pv_list = []
+    #Iterates through all files in filelist
+    for file_ in filelist:
+        #Checks if file is a .csv
+        if file_.lower().endswith('.csv'):
+            data = convert_to_df(folder,file_)
+            pv = process_pv(data)
+            #if type(div) != 'NonType':
+            if len(pv) !=0:
+                pv_list.append(pv)
+    pv = pd.concat(pv_list,sort=False )
+    return pv
 
 def calculate_PL (df):
     newdf = df.loc[:,['Quantity','Quantity_Rsum','T. Price','Proceeds']]
