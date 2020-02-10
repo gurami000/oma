@@ -1,0 +1,4 @@
+bugID,Description,note
+001,tables_deposits_and_withdrawals.csv.csv
+002,tables_pertfolio_value.csv
+003,import csv Unmamed 0 column,index_col=0
