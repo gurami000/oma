@@ -46,6 +46,7 @@ def process_data(data, asset_category):
     return trades
 
 def process_depAndWith(data):
+    data_base = data.loc[data.a == 'Cash Report']
     data_depAndWith = data.loc[data.a == 'Deposits & Withdrawals']
     if len(data_depAndWith) > 0:
         depAndWith = data_depAndWith.loc[data_depAndWith.b == 'Data']
@@ -57,8 +58,16 @@ def process_depAndWith(data):
         depAndWith.drop(columns=['Header','Deposits & Withdrawals'], inplace=True, errors='ignore')
         depAndWith['Date'] = pd.to_datetime(depAndWith['Settle Date'])
         depAndWith = depAndWith.groupby(['Date','Currency'], as_index=False).sum()
+
+        base = data_base.loc[data_base.b == 'Data']
+        base = base.loc[data.d == 'Base Currency Summary']
+        base = base.loc[(data.c == 'Deposits')|(data.c=='Withdrawals')]
+        
+        base.e = base.e.astype(float)*-1
+        base = base.e.reset_index(drop=True)
+        depAndWith['In Base'] = base
     else:
-        depAndWith = pd.DataFrame()
+         depAndWith = pd.DataFrame()
     return depAndWith
 
 
