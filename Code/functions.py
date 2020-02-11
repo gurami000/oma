@@ -46,7 +46,6 @@ def process_data(data, asset_category):
     return trades
 
 def process_depAndWith(data):
-    data_base = data.loc[data.a == 'Cash Report']
     data_depAndWith = data.loc[data.a == 'Deposits & Withdrawals']
     if len(data_depAndWith) > 0:
         depAndWith = data_depAndWith.loc[data_depAndWith.b == 'Data']
@@ -59,15 +58,8 @@ def process_depAndWith(data):
         depAndWith['Date'] = pd.to_datetime(depAndWith['Settle Date'])
         depAndWith = depAndWith.groupby(['Date','Currency'], as_index=False).sum()
 
-        base = data_base.loc[data_base.b == 'Data']
-        base = base.loc[data.d == 'Base Currency Summary']
-        base = base.loc[(data.c == 'Deposits')|(data.c=='Withdrawals')]
-        
-        base.e = base.e.astype(float)*-1
-        base = base.e.reset_index(drop=True)
-        depAndWith['In Base'] = base
     else:
-         depAndWith = pd.DataFrame()
+          depAndWith = pd.DataFrame()
     return depAndWith
 
 
@@ -154,6 +146,34 @@ def process_pv(data):
         pv= pd.DataFrame()
 
     return pv
+
+def process_DW_In_Base(data):
+    date = data.loc[data.a =='Statement']
+    date = date.loc[date.c =='Period']
+    date.dropna(axis=1,inplace=True)
+    date.drop(columns=['a','b','c'], inplace=True, errors='ignore')
+    date.reset_index(inplace=True,drop=True)
+    date = date.iloc[0:1]
+    date.columns = ['Date']
+    date['Date'] = pd.to_datetime(date['Date'])
+
+    data_check = data.loc[data.a == 'Deposits & Withdrawals']
+    if len(data_check) > 0:
+        depAndWith = data.loc[data.a == 'Cash Report']
+        depAndWith = depAndWith.loc[depAndWith.d == 'Base Currency Summary']
+        depAndWith = depAndWith.loc[(depAndWith.c == 'Deposits')| (depAndWith.c == 'Withdrawals')]
+        depAndWith.e = depAndWith.e.astype(float)
+        # # depAndWith.set_index('b', inplace =True)
+        depAndWith = depAndWith.groupby('a').sum()
+        
+      
+        
+        depAndWith = depAndWith.reset_index(drop=True)
+        dw = pd.Series(depAndWith.e)
+        date['DW_In_Base'] = dw
+    else:
+        date = pd.DataFrame()
+    return date    
 
 def get_all_trades(folder):
     #Creates a list of all files in folder
@@ -257,6 +277,23 @@ def get_all_portfolio_value(folder):
                 pv_list.append(pv)
     pv = pd.concat(pv_list,sort=False )
     return pv
+
+def get_all_DW_In_Base(folder):
+    #Creates a list of all files in folder
+    filelist = os.listdir(folder)
+    #Creates a empty list to append all dataframes
+    depAndWith_list = []
+    #Iterates through all files in filelist
+    for file_ in filelist:
+        #Checks if file is a .csv
+        if file_.lower().endswith('.csv'):
+            data = convert_to_df(folder,file_)
+            depAndWith = process_DW_In_Base(data)
+            #if type(div) != 'NonType':
+            if len(depAndWith) !=0:
+                depAndWith_list.append(depAndWith)
+    deposits_and_withdrawals = pd.concat(depAndWith_list,sort=False )
+    return deposits_and_withdrawals
 
 def calculate_PL (df):
     newdf = df.loc[:,['Quantity','Quantity_Rsum','T. Price','Proceeds']]
