@@ -313,4 +313,15 @@ def updatePL (df):
     new_trades = pd.concat(dataframe_list,sort=False ).sort_index()
     return new_trades
 
+def calculateTWR(amounts):
+    ###Returns TWR of amount series
+    ##Period return = amount - amount previous period / amount previous period
+    #TWR = (Cummulative product of Period returns +1 ) - 1
+    # Times 100 as a percentage
+    # #df['TWR'] = ((df['PeriodReturn']+1).cumprod()-1)*100
+    #amount (series)
+    ###
+    twr = ((( ((amounts- amounts.shift())/amounts.shift()))+1).cumprod()-1)*100
+    return twr
+
    
