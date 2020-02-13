@@ -366,8 +366,17 @@ def calculateTWR(amounts):
     # Times 100 as a percentage
     # #df['TWR'] = ((df['PeriodReturn']+1).cumprod()-1)*100
     #amount (series)
+    #cash (optional) (series)
     ###
     twr = ((( ((amounts- amounts.shift())/amounts.shift()))+1).cumprod()-1)*100
     return twr
 
+
+def calculate_periodReturn(amounts, cash=0):
+    ###Calulate Period Return
+    #amount (series)
+    #cash (optional) (series)
+    ###
+    pr = (amounts - (amounts.shift() + cash))/(amounts.shift() + cash)
+    return pr
    
