@@ -2,5 +2,5 @@ bugID,Description,note,state
 001,tables_deposits_and_withdrawals.csv.csv, fixed
 002,tables_pertfolio_value.csv, fixed
 003,import csv Unmamed 0 column,index_col=0, fixed
-004, some In base column signs oposite
-005, some in base column items missing
+004, some In base column signs oposite, fixed
+005, some in base column items missing, fixed
