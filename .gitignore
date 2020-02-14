@@ -3,6 +3,7 @@
 *.pyc
 code/data/
 code/__pycache__/
+code/temp/__pycache__/
 code/helpers/__pycache__/
 code/notebooks
 code/reports

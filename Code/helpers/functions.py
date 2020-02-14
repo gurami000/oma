@@ -370,7 +370,7 @@ def update_symbol_names(folder):
 
     #Creates a new dataframe with all new symbol keys
     trades = pd.read_csv(folder/'tables_trades.csv') 
-    trades.drop(columns=['Quantity','Currency','Date/Time','T. Price','Proceeds','Comm/Fee','Quantity_Rsum'],axis= 1, inplace=True)
+    trades.drop(columns=['Quantity','Currency','Date/Time','T. Price','Proceeds','Comm/Fee','Quantity_Rsum','AvgOpenPrice','PL','CumPL'],axis= 1, inplace=True, errors='ignore')
     trades['Symbol'] = trades.Symbol.str.strip()
     trades['Underliying'] = trades['Symbol'].str.split(n=1).str[0].str.strip()
     trades = trades.drop_duplicates('Symbol').sort_values(by=['Symbol'])

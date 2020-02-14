@@ -4,3 +4,4 @@ bugID,Description,note,state
 003,import csv Unmamed 0 column,index_col=0, fixed
 004, some In base column signs oposite, fixed
 005, some in base column items missing, fixed
+006, production crashed when does not exist, fixed
