@@ -1,7 +1,9 @@
 *.xlsx
 *.xls
+*.pyc
 code/data/
 code/__pycache__/
+code/helpers/__pycache__/
 code/notebooks
 code/reports
 .vscode/

@@ -360,6 +360,32 @@ def updatePL (df):
     new_trades = pd.concat(dataframe_list,sort=False ).sort_index()
     return new_trades
 
+def update_symbol_names(folder):
+    
+    #Read current Symbolkey table if exists or empty dataframe
+    if (folder/'tables_symbol_key.xlsx').is_file():
+        symbolKey = pd.read_excel(folder/'tables_symbol_key.xlsx')
+    else:
+        symbolKey = pd.DataFrame()
+
+    #Creates a new dataframe with all new symbol keys
+    trades = pd.read_csv(folder/'tables_trades.csv') 
+    trades.drop(columns=['Quantity','Currency','Date/Time','T. Price','Proceeds','Comm/Fee','Quantity_Rsum'],axis= 1, inplace=True)
+    trades['Symbol'] = trades.Symbol.str.strip()
+    trades['Underliying'] = trades['Symbol'].str.split(n=1).str[0].str.strip()
+    trades = trades.drop_duplicates('Symbol').sort_values(by=['Symbol'])
+    trades = trades.reset_index(drop=True)
+
+    #Finds the new Symbols
+    df_diff = pd.concat([symbolKey,trades], sort=False).drop_duplicates(keep=False)
+
+    # Appends them, sort and reset index
+    symbolKey = symbolKey.append(df_diff)
+    symbolKey.sort_values(by=['Symbol'],inplace=True)
+    symbolKey = symbolKey.reset_index(drop=True)
+
+    return symbolKey
+
 def calculateTWR(amounts):
     ###Returns TWR of amount series
     ##Period return = amount - amount previous period / amount previous period
