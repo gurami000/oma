@@ -16,7 +16,7 @@ def process_ca(data):
             header_row = list(data_ca.loc[first_row])
             ca.columns = header_row
             ca = ca.loc[:,ca.columns.notna()] 
-            ca.drop(columns=['Corporate Actions','Header','Report Date','Description','Value','Realized P/L','Code'], inplace=True, errors='ignore')
+            ca.drop(columns=['Corporate Actions','Header','Report Date','Value','Realized P/L','Code'], inplace=True, errors='ignore')
             ca.dropna(axis=0,inplace=True)
             ca['Comm/Fee'] = 0
             ca['T. Price'] = 0
@@ -62,7 +62,6 @@ def process_depAndWith(data):
     else:
           depAndWith = pd.DataFrame()
     return depAndWith
-
 
 def process_div(data):
     data_div = data.loc[data.a == 'Dividends']
@@ -176,6 +175,7 @@ def process_DW_In_Base(data):
         date = pd.DataFrame()
     return date    
 
+
 def get_all_trades(folder):
     #Creates a list of all files in folder
     filelist = os.listdir(folder)
@@ -191,15 +191,41 @@ def get_all_trades(folder):
                 df = process_data(data, i)
                 dataframe_list.append(df)
             dataframe_list.append(process_ca(data))
-    new_trades = pd.concat(dataframe_list,sort=False )
-    dataframe = pd.concat(dataframe_list,sort=False )
-    dataframe['Proceeds'] = dataframe['Proceeds'].astype('float')
-    dataframe['Quantity'] = dataframe['Quantity'].astype('float')
-    dataframe['T. Price'] = dataframe['T. Price'].astype('float')
-    dataframe['Comm/Fee'] = dataframe['Comm/Fee'].astype('float')
-    dataframe['Date/Time'] = pd.to_datetime(dataframe['Date/Time'])
-    dataframe['Quantity_Rsum'] =  dataframe.groupby(['Symbol'])['Quantity'].transform(lambda x : x.cumsum())
+            
+    # if len(dataframe_list) == 0:
+    #     dataframe = pd.DataFrame()
+    else:
+        #new_trades = pd.concat(dataframe_list,sort=False )
+        dataframe = pd.concat(dataframe_list,sort=False )
+        if len(dataframe) > 0:
+            # dataframe['Proceeds'] = dataframe['Proceeds'].astype('float')
+            # dataframe['Quantity'] = dataframe['Quantity'].astype('float')
+            # dataframe['T. Price'] = dataframe['T. Price'].astype('float')
+            # dataframe['Comm/Fee'] = dataframe['Comm/Fee'].astype('float')
+            dataframe['Date/Time'] = pd.to_datetime(dataframe['Date/Time'])
+            dataframe.reset_index(inplace=True, drop=True)
+            dataframe.set_index('Date/Time').sort_index().reset_index(inplace=True)
+            #dataframe['Quantity_Rsum'] =  dataframe.groupby(['Symbol'])['Quantity'].transform(lambda x : x.cumsum())
     return dataframe
+
+def get_all_corporate_actions(folder):
+    #Creates a list of all files in folder
+    filelist = os.listdir(folder)
+    #Creates a empty list to append all dataframes
+    ca_list = []
+    #Iterates through all files in filelist
+    for file_ in filelist:
+        #Checks if file is a .csv
+        if file_.lower().endswith('.csv'):
+            data = convert_to_df(folder,file_)
+            ca = process_ca(data)
+            if len(ca) !=0:
+                ca_list.append(ca)
+    if len(ca_list) == 0:
+        corporate_actions = pd.DataFrame()
+    else:
+        corporate_actions = pd.concat(ca_list,sort=False )
+    return corporate_actions
 
 def get_all_depAndWith(folder):
     #Creates a list of all files in folder
@@ -215,9 +241,11 @@ def get_all_depAndWith(folder):
             #if type(div) != 'NonType':
             if len(depAndWith) !=0:
                 depAndWith_list.append(depAndWith)
-    deposits_and_withdrawals = pd.concat(depAndWith_list,sort=False )
+    if len(depAndWith_list) == 0:
+        deposits_and_withdrawals = pd.DataFrame()
+    else:
+        deposits_and_withdrawals = pd.concat(depAndWith_list,sort=False )
     return deposits_and_withdrawals
-
 
 def get_all_dividends(folder):
     #Creates a list of all files in folder
@@ -237,14 +265,19 @@ def get_all_dividends(folder):
                 div_list.append(div)
             if len(tax) !=0:
                 tax_list.append(tax)
-    gross_dividends = pd.concat(div_list,sort=False )
-    gross_dividends.groupby(['Date','Currency','Symbol'],as_index=False).sum()
-    taxes = pd.concat(tax_list,sort=False )
-    taxes.groupby(['Date','Currency','Symbol'],as_index=False).sum()
-    dividends = pd.concat([gross_dividends,taxes], sort=False).groupby(['Date','Symbol','Currency']).sum().reset_index()
-    dividends['Proceeds'] = dividends['Gross Amount'] + dividends['Tax Amount']
+    if len(div_list) == 0:
+        dividends = pd.DataFrame()
+    else:
+        gross_dividends = pd.concat(div_list,sort=False )
+        gross_dividends.groupby(['Date','Currency','Symbol'],as_index=False).sum()
+        if len(tax_list) ==0:
+            taxes = pd.DataFrame()
+        else:
+            taxes = pd.concat(tax_list,sort=False )
+            taxes.groupby(['Date','Currency','Symbol'],as_index=False).sum()
+        dividends = pd.concat([gross_dividends,taxes], sort=False).groupby(['Date','Symbol','Currency']).sum().reset_index()
+        dividends['Proceeds'] = dividends['Gross Amount'] + dividends['Tax Amount']
     return dividends
-
 
 def get_all_fees(folder):
     #Creates a list of all files in folder
@@ -259,7 +292,10 @@ def get_all_fees(folder):
             fee = process_fees(data)
             if type(fee) != 'NonType':
                 fees_list.append(fee)
-    fees = pd.concat(fees_list,sort=False )
+    if len(fees_list) == 0:
+        fees = pd.DataFrame()
+    else:
+        fees = pd.concat(fees_list,sort=False )
     return fees
 
 def get_all_portfolio_value(folder):
@@ -276,7 +312,10 @@ def get_all_portfolio_value(folder):
             #if type(div) != 'NonType':
             if len(pv) !=0:
                 pv_list.append(pv)
-    pv = pd.concat(pv_list,sort=False )
+    if len(pv_list) == 0:
+        pv = pd.DataFrame()
+    else:    
+        pv = pd.concat(pv_list,sort=False )
     return pv
 
 def get_all_DW_In_Base(folder):
@@ -293,10 +332,21 @@ def get_all_DW_In_Base(folder):
             #if type(div) != 'NonType':
             if len(depAndWith) !=0:
                 depAndWith_list.append(depAndWith)
-    deposits_and_withdrawals = pd.concat(depAndWith_list,sort=False )
+    if len(depAndWith_list) == 0:
+        deposits_and_withdrawals = pd.DataFrame()
+    else:
+        deposits_and_withdrawals = pd.concat(depAndWith_list,sort=False )
     return deposits_and_withdrawals
 
+
+
 def calculate_PL (df):
+    df['Proceeds'] = df['Proceeds'].astype('float')
+    df['Quantity'] = df['Quantity'].astype('float')
+    df['T. Price'] = df['T. Price'].astype('float')
+    df['Comm/Fee'] = df['Comm/Fee'].astype('float')    
+    df['Quantity_Rsum'] =  df.groupby(['Symbol'])['Quantity'].transform(lambda x : x.cumsum())
+
     newdf = df.loc[:,['Quantity','Quantity_Rsum','T. Price','Proceeds']]
     newdf['prev'] = newdf['Quantity_Rsum'].shift(1 , fill_value=0)
     #Make a new column OIDC
@@ -349,15 +399,18 @@ def calculate_PL (df):
 
 
 def updatePL (df):
-    df.drop(['AvgOpenPrice','PL','CumPL'], axis=1, inplace = True, errors= 'ignore')
-    dfgrouped = df.groupby('Symbol')
-    dataframe_list = []
-    for name, group in dfgrouped:
-        symbol_group = dfgrouped.get_group(name)
-        profLoss = calculate_PL( symbol_group)
-        symbol_group = symbol_group.join(profLoss)
-        dataframe_list.append(symbol_group)
-    new_trades = pd.concat(dataframe_list,sort=False ).sort_index()
+    if len(df) > 0:
+        df.drop(['AvgOpenPrice','PL','CumPL'], axis=1, inplace = True, errors= 'ignore')
+        dfgrouped = df.groupby('Symbol')
+        dataframe_list = []
+        for name, group in dfgrouped:
+            symbol_group = dfgrouped.get_group(name)
+            profLoss = calculate_PL( symbol_group)
+            symbol_group = symbol_group.join(profLoss)
+            dataframe_list.append(symbol_group)
+        new_trades = pd.concat(dataframe_list,sort=False ).sort_index()
+    else:
+        new_trades = pd.DataFrame()
     return new_trades
 
 def update_symbol_names(folder):
