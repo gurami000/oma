@@ -7,4 +7,3 @@ bugID,Description,note,state
 006, production crashed when does not exist, fixed
 007, production crashed wrong tables directory name, fixed
 008, producion crashes when processing new trades, fixed
-009, duplicated forex

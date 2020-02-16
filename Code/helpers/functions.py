@@ -4,7 +4,7 @@ import numpy as np
 
 def convert_to_df(folder,a_file):
     data = pd.read_csv(folder/a_file, names=list('abcdefghijklmnopq'))
-    data = data.loc[~data.a.isin(['Codes', 'Notes/Legal Notes','Account Information','Change in NAV','Mark-to-Market Performance Summary','Realized & Unrealized Performance Summary','Open Positions'])]
+    data = data.loc[~data.a.isin(['Codes', 'Notes/Legal Notes','Account Information','Change in NAV','Mark-to-Market Performance Summary','Realized & Unrealized Performance Summary'])]
     return data
 
 def process_ca(data):
@@ -165,9 +165,6 @@ def process_DW_In_Base(data):
         depAndWith.e = depAndWith.e.astype(float)
         # # depAndWith.set_index('b', inplace =True)
         depAndWith = depAndWith.groupby('a').sum()
-        
-      
-        
         depAndWith = depAndWith.reset_index(drop=True)
         dw = pd.Series(depAndWith.e)
         date['DW_In_Base'] = dw
@@ -175,6 +172,32 @@ def process_DW_In_Base(data):
         date = pd.DataFrame()
     return date    
 
+
+def process_option_prices(data):
+    date = data.loc[data.a =='Statement']
+    date = date.loc[date.c =='Period']
+    date.dropna(axis=1,inplace=True)
+    date.drop(columns=['a','b','c'], inplace=True, errors='ignore')
+    date.reset_index(inplace=True,drop=True)
+    date = date.iloc[0:1]
+    date.columns = ['Date']
+
+    data_op = data.loc[data.a =='Open Positions']
+    if len(data_op) > 0:
+        op = data_op.loc[data_op.b == 'Data']
+        if len(op) > 0:
+            first_row = op.index.values[0]-1
+            header_row = list(data_op.loc[first_row])
+            op.columns = header_row
+            op = op.loc[:,op.columns.notna()] 
+            op = op.loc[(op['Asset Category'] == 'Equity and Index Options')|( op['Asset Category'] =='Options On Futures')]
+            op.drop(columns= ['Open Positions','Header','DataDiscriminator','Asset Category','Quantity','Mult','Cost Price','Cost Basis','Value','Unrealized P/L','Code'],inplace=True, errors='ignore')
+            op = pd.concat([date,op],axis=1).fillna( method='ffill').dropna()
+        else:
+            op = pd.DataFrame()
+    else:
+        op = ca = pd.DataFrame()
+    return op
 
 def get_all_trades(folder):
     #Creates a list of all files in folder
@@ -338,7 +361,25 @@ def get_all_DW_In_Base(folder):
         deposits_and_withdrawals = pd.concat(depAndWith_list,sort=False )
     return deposits_and_withdrawals
 
-
+def get_all_option_prices(folder):
+    #Creates a list of all files in folder
+    filelist = os.listdir(folder)
+    #Creates a empty list to append all dataframes
+    op_list = []
+    #Iterates through all files in filelist
+    for file_ in filelist:
+        #Checks if file is a .csv
+        if file_.lower().endswith('.csv'):
+            data = convert_to_df(folder,file_)
+            op = process_option_prices(data)
+            #if type(div) != 'NonType':
+            if len(op) !=0:
+                op_list.append(op)
+    if len(op_list) == 0:
+        option_prices = pd.DataFrame()
+    else:
+        option_prices = pd.concat(op_list,sort=False )
+    return option_prices
 
 def calculate_PL (df):
     df['Proceeds'] = df['Proceeds'].astype('float')
